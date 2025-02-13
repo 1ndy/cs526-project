@@ -1,102 +1,158 @@
-# A Code-Synthesis approach to Interoperability
-
-## Motivation
-
-In the age of the fourth paradigm[^1] of scientific research, computation plays a
-pivotal role in achieving evermore precise and complex results. Despite their reliance on software, domain scientists rarely command an aptitude in computer science principles; often, their code is oriented towards producing results rather than encoding their method in reusable or even reproducible way. The preference within certain subfields for a specific language drives a wedge between already siloed disciplines, hampering collaboration.
-
-Solutions to connect codebases in different languages do exist. Chief among them is the Foreign Function Interface (FFI). FFIs are bespoke software libraries written in addition to existing code which export the functionality of the software for use in another language. Unfortunately, most FFIs are designed to export functions to or use functions from a C program. They also require knowledge of the Application Binary Interface, data representation, computer memory, and other advanced topics. Lastly, writing FFIs does not contribute to a research product and therefore would not be prioritized even if it was easy.
-
-The other major current solution to interoperability is serialization. Many programming languages possess the ability to automatically generate serialization and deserialization routines from static definitions of structs or classes. The routines will encode the data from these memory objects into a common, easy-to-parse format such as JSON. Another program which can accept serialized data in the same format may then parse that representation into its own internal data structure. Though this has a significantly lower barrier to use than FFIs, serialization techniques spend large amounts of time converting bytes from memory into a string representation. Finally, serialization formats support limited complexity within a data structure; for example, references cannot be effectively encoded in a serialized format.
-
-
-## Background
+Stochastic Superoptimization of WebAssembly Bytecode Size
 
 WebAssembly (wasm) is a binary instruction format for a stack-based virtual
-machine. Though originally intended to accelerate client-side code in web
-browsers, wasm executables can be interpreted by an "embedder" and run in
-virtually any environment. Wasm's emergence as a performant, portable
-instruction format has made it a compilation target for many source languages
-including C/C++, Go, Rust, .NET, Zig, Python, Javascript, Ocaml, and others.
+machine intended to execute client-side computations in web browsers. Designed
+to be performant and safe, it has become a compilation target for many source
+languages including C/C++, Go, Rust, .NET, Zig, OCaml, Dart, Swift, and others.
+Optimizing the resulting WebAssembly modules for size is critical for several
+reasons (4). By its nature, WebAssembly code is frequently sent to clients via a
+network connection. In this situation, every byte sent adds latency to the start
+of execution of the client side code. Once the code is delivered to the browser
+(and sometimes before it is completely transferred), a JIT compiler converts
+WebAssembly instructions into ISA-specific actions on the host. Less code means
+fewer instructions that the JIT compiler must process. This could mean less
+power expended on processing, which is a concern for battery-powered devices
+which access the web. Size-optimized WebAssembly can lead to efficiency gains in
+multiple dimensions. Therefore optimal, minimal WebAssembly code is extremely
+desirable.
 
-With so many languages targeting wasm, it becomes possible to think about
-software libraries which are comprised of functions and data structures authored
-in different programming languages. While the existence of a portable format
-makes a great stride towards realizing this, "source language artifacts" are
-clearly visible in the generated wasm code and inhibit direct interoperation.
-Examples of artifacts include runtimes, memory allocation schemas, arrays bounds
-checking, and struct packing.
+With so many source languages targeting WebAssembly, some via their own code
+generators, the diversity of bytecode is extremely high, even when the source
+languages contain semantically identical functions. The resulting wider range of
+inputs to an optimization pass increases the likelihood of missing optimization
+opportunities. For example, (1) found that even Emscripten, arguably the most
+mainstream WebAssembly compiler, produced “optimized” code that contained
+redundant initializations. Binaryen, an optimizing compiler for WebAssembly,
+contains in its codebase compiler passes specific to Emscripten for this reason;
+it also includes several for Java, Javascript, and LLVM IR (9). WebAssembly is a
+target for many compilers; manually developing optimizations specific to each
+one’s output is unsustainable. An adaptable approach not based on manually
+created rules will more effectively support the rapid adoption of WebAssembly.
 
-The next step in achieving effortless interoperability is to make compatible the
-in-memory representations of data structures.
+We therefore propose a project which applies Stochastic Superoptimization (3) to
+WebAssembly bytecode with the goal of minimizing bytecode size.
+
+State of the Art
+
+Super-optimization is the pursuit of the shortest possible sequence of machine
+instructions required to solve a problem (2). Projects such as Souper (5) and
+Ansor (6) apply inductive and evolutionary optimization techniques respectively,
+while Stoke (3) employs a stochastic method to achieve the shortest code. Each
+works by exploring the space, defined by the order of instructions, that the
+input program inhabits in an attempt to find a semantically equivalent but more
+optimal version of the code (4). While superoptimization on WebAssembly has been
+attempted (7,8), it has leveraged methods which focus on completeness. In (7),
+Arteaga et al. apply Souper to LLVM IR before compiling to WebAssembly. While
+this means that the final bytecode benefits from the expansive optimization
+passes available in that compiler infrastructure, the process neglects to
+account for the idiosyncrasies of WebAssembly specifically, meaning that some
+optimization opportunities could be neglected. In (8), Sprokholt applies the
+CounterExample-Guided Inductive Synthesis (CEGIS, 10) approach on which Souper
+is based to manipulate directly the WebAssembly code’s process graphs, using
+approximate instruction costs to choose instructions during program synthesis.
+While this approach demonstrates good performance improvements on a variety of
+problems, its testing on real-world codebases yielded modules that were not less
+than 99% the size of the original. Optimization times from real world programs
+ranged from a few seconds to over 9 hours. (Benchmarks for the real world
+programs were excluded due to large amounts of Javascript glue code.) These
+results suggest that there is significant opportunity for optimization in
+WebAssembly, and show that in some cases those optimizations require large
+amounts of time to uncover.
 
 
-## Example Desired Outcome
+Our Improvements 
 
-Suppose we have a struct "Point", which stores the X, Y, and Z integer
-coordinates and a name. We then define a function "distance" which, for
-simplicity, returns the sum of the values on each axis. These objects can be
-easily implemented in both C and Rust and then compiled to wasm with emscripten
-and rustc respectively. The complete wasm from the C code is:
-```wasm
-(module
-  (type (;0;) (func (param i32) (result i32)))
-  (import "env" "__linear_memory" (memory (;0;) 1))
-  (func $distance (type 0) (param i32) (result i32)
-    (local i32 i32 i32 i32 i32)
-    local.get 0
-    i32.load
-    local.set 1
-    local.get 0
-    i32.load offset=4
-    local.set 2
-    local.get 1
-    local.get 2
-    i32.add
-    local.set 3
-    local.get 0
-    i32.load offset=8
-    local.set 4
-    local.get 3
-    local.get 4
-    i32.add
-    local.set 5
-    local.get 5
-    return)
-  (data $.L.str (i32.const 0) "hello\00")
-  (data $pt (i32.const 8) "\01\00\00\00\02\00\00\00\03\00\00\00\00\00\00\00")
-  (data $.L.str.1 (i32.const 24) "goodbye\00")
-  (data $pt2 (i32.const 32) "\01\00\00\00\02\00\00\00\03\00\00\00\18\00\00\00"))
-```
-and a selection of the much larger wasm produced by the Rust compiler:
-```wasm
-(func $distance (type 3) (param i32) (result i32)
-    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    local.get 0
-    i32.load offset=8
-    local.set 1
-    local.get 0
-    i32.load offset=12
-    local.set 2
-    i32.const 0
-    local.set 3
-    local.get 2
-    local.get 3
-    i32.lt_s
-    local.set 4
-    local.get 1
-    local.get 2
-    i32.add
-    local.set 5
-    local.get 5
-    local.get 1
-    i32.lt_s
-    ...
-```
-Immediately, we see that the offsets for the C version of the code do not match
-those of the Rust version. If the C function were to be passed the memory
-location of the rust-produced struct, it would index into the data structure
-incorrectly. Using the [Rust Reference on Data Layouts](https://doc.rust-lang.org/reference/type-layout.html) and the C99 specification, we can figure out that the C implementation did not insert padding bytes, while the Rust implementation did. With source language and compiler version information given as preconditions, it should be possible to apply rewrite rules to the data accesses such that the C function would correctly index into the memory allocated for the Rust struct.
+Stochastic optimization (3) forgoes the SMT-based approach in
+favor of a Markov Chain Monte Carlo (MCMC) technique that can optimize over an
+irregular loss function. The stochastic technique starts from a random location
+within the search space, meaning that it can find optimizations which are
+distant from those performed by traditional optimization passes. This is
+particularly important when homegrown code generators may be generating exotic
+sequences of WebAssembly instruction patterns that do not match with existing
+optimization rules. Although completeness cannot be guaranteed, this approach
+provides greater speed than SMT-based methods as well as flexibility in the axes
+on which to optimize: code size and power usage are explicitly mentioned as
+measures that may be improved stochastically simply by changing the loss
+function. With a sufficiently robust implementation, our contribution will lay
+the groundwork for highly customizable optimization objectives, potentially at
+the granularity of specific WebAssembly embedders such as Wasmtime and V8.
 
----
-1. https://www.microsoft.com/en-us/research/publication/fourth-paradigm-data-intensive-scientific-discovery/ 
+The size of each opcode in WebAssembly is a single byte, meaning that a
+reduction in the overall number of instructions will be the primary optimization
+goal. However, given that data sent over the web is frequently compressed, we
+will add a loss function which considers the compressed size of the optimized
+code if time allows. Binaryen provides compiler infrastructure for
+Webassembly-in, Webassembly-out optimization passes; we will explore this
+framework as a place to house our contribution but may switch to a standalone
+Python implementation if the mathematical component if the work becomes too
+arduous in C++.
+
+
+Tasks
+1. Learn about how to implement Stochastic Superoptimization from (3). Decide if
+   we want to implement this within Binaryen or make it standalone. (February
+   16)
+2. Choose optimization criteria and encode in a loss function. (February 20)
+3. Create test programs, some in Wasm some in languages which can compile to
+   Wasm, and define the optimizations we want to see happen for each. Examples
+   should contain both obvious optimizations and ones which normal optimization
+   passes could not reach. (February 23)
+4. If Binaryen was chosen, learn how to implement passes within Binaryen. If
+   Binaryen was not chosen, develop the code needed to manipulate Wasm within an
+   optimizer. Implement Metropolis-Hastings algorithm to perform MCMC sampling.
+   (March 2)
+5. Create an exact equality function for use in MCMC. (March 9)
+6. Create an approximate equality function for use in MCMC. (March 14)
+7. Implement stochastic superoptimization without a synthesis phase on a subset
+   of the example problems. Write the interim project report. (March 28)
+8. Add a synthesis phase to the superoptimizer. (April 4)
+9. Test superoptimizer on large programs and fix any bugs that come up. Write
+   the second interim report. (April 18)
+10. Write the final report and submit it. (April 30)
+
+Task Distribution
+
+Magilan: Implement stochastic superoptimization without synthesis. Execute
+small-scale tests. Develop exact and approximate equality functions. Work on
+Metropolis-Hastings Method. Contribute to synthesis. Develop some test programs.
+Test real-world codebases.
+
+Hunter: Evaluate Binaryen for suitability or develop Wasm handling code in
+Python. Develop loss function for size and compressed size. Work on
+Metropolis-Hastings Method. Contribute to synthesis. Develop some test programs.
+Test real-world codebases.
+
+
+References
+1. Liu, Zhibo, et al. "Exploring missed optimizations in webassembly
+   optimizers." Proceedings of the 32nd ACM SIGSOFT International Symposium on
+   Software Testing and Analysis. 2023.
+
+2. Massalin, Henry. "Superoptimizer: a look at the smallest program." ACM
+   SIGARCH Computer Architecture News 15.5 (1987): 122-126.
+
+3. Schkufza, Eric, Rahul Sharma, and Alex Aiken. "Stochastic superoptimization."
+   ACM SIGARCH Computer Architecture News 41.1 (2013): 305-316.
+
+4. Bartell, Sean. Optimizing whole programs for code size. Diss. University of
+   Illinois at Urbana-Champaign, 2021.
+
+5. Sasnauskas, Raimondas, et al. "Souper: A synthesizing superoptimizer." arXiv
+   preprint arXiv:1711.04422 (2017).
+
+6. Zheng, Lianmin, et al. "Ansor: Generating {High-Performance} tensor programs
+   for deep learning." 14th USENIX symposium on operating systems design and
+   implementation (OSDI 20). 2020.
+
+7. Cabrera Arteaga, Javier, et al. "Superoptimization of WebAssembly bytecode."
+   Companion Proceedings of the 4th International Conference on Art, Science,
+   and Engineering of Programming. 2020.
+
+8. Sprokholt, Dennis G. Superoptimization of WebAssembly Process Graphs. MS
+   thesis. 2021.
+
+9. https://github.com/WebAssembly/binaryen/tree/main/src/passes
+
+10. Abate, Alessandro, et al. "Counterexample guided inductive synthesis modulo
+    theories." International Conference on Computer Aided Verification. Cham:
+    Springer International Publishing, 2018.
