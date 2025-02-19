@@ -79,6 +79,9 @@ option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten buil
 
 option(ENABLE_WERROR "Enable -Werror" ON)
 
+# Turns on Stochasitc Superoptimization tools
+option(BUILD_SSO "Enable SSO tools" ON)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -176,6 +179,7 @@ include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
 if(BUILD_LLVM_DWARF)
   include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
 endif()
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/wasmtime/include)
 
 # Add output directory to include path so config.h can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -451,6 +455,10 @@ endif()
 target_link_libraries(binaryen Threads::Threads)
 if(BUILD_LLVM_DWARF)
   target_link_libraries(binaryen llvm_dwarf)
+endif()
+
+if(BUILD_SSO)
+  target_link_libraries(binaryen ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wasmtime/lib/libwasmtime.a)
 endif()
 
 add_subdirectory(src/ir)

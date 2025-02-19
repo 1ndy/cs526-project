@@ -339,6 +339,10 @@ public:
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
+  constexpr bool isI32() const { return id == i32; };
+  constexpr bool isI64() const { return id == i64; };
+  constexpr bool isF32() const { return id == f32; };
+  constexpr bool isF64() const { return id == f64; };
   bool isSingle() const { return isConcrete() && !isTuple(); }
 
   // Tuples, refs, etc. are quickly handled using isBasic(), leaving the non-

@@ -6,6 +6,7 @@ set(support_SOURCES
   command-line.cpp
   debug.cpp
   dfa_minimization.cpp
+  equivalence.cpp
   file.cpp
   istring.cpp
   json.cpp
