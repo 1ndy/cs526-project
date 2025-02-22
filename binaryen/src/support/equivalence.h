@@ -54,8 +54,8 @@ class Executor {
     wasmtime_module_t *module;
     wasmtime_instance_t instance;
     wasmtime_extern_t func;
-    wasmtime_val_t* params;
-    wasmtime_val_t* results;
+//    wasmtime_val_t* params;
+//    wasmtime_val_t* results;
 
     static wasm_byte_vec_t* read_wat_file(std::string wat_file);
 };

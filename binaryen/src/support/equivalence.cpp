@@ -9,14 +9,14 @@ TestCase::TestCase(wasm::Signature sig) {
     // create wasmtime_val_t array of correct size for number of params
     std::vector<wasm::Type> params_list;
     if (params_type.isTuple()) {
-    params_list = params_type.getTuple();
-    this->test_params = (wasmtime_val_t*)malloc(sizeof(wasmtime_val_t) * params_list.size());
-    this->num_params = params_list.size();
+        params_list = params_type.getTuple();
+        this->test_params = (wasmtime_val_t*)malloc(sizeof(wasmtime_val_t) * params_list.size());
+        this->num_params = params_list.size();
     } else {
-    this->test_params = (wasmtime_val_t*)malloc(sizeof(wasmtime_val_t));
-    this->test_params[0].kind = convert_type_name(params_type);
-    this->num_params = 1;
-    params_list = {params_type};
+        this->test_params = (wasmtime_val_t*)malloc(sizeof(wasmtime_val_t));
+        this->test_params[0].kind = convert_type_name(params_type);
+        this->num_params = 1;
+        params_list = {params_type};
     }
 
     // fill the params array with values of the correct type
