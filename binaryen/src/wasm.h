@@ -2424,6 +2424,7 @@ public:
   DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
+  std::vector<Name> getFunctionNames();
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);

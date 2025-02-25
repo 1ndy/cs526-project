@@ -1568,6 +1568,14 @@ Tag* Module::getTag(Name name) {
   return getModuleElement(tagsMap, name, "getTag");
 }
 
+std::vector<Name> Module::getFunctionNames() {
+  std::vector<Name> function_names;
+  for (auto it : this->functionsMap) {
+    function_names.push_back(it.first);
+  }
+  return function_names;
+}
+
 template<typename Map>
 typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
   auto iter = m.find(name);
