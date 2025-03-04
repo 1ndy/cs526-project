@@ -129,6 +129,9 @@ uint32_t TestCase::hammingDistance(wasmtime_val_t& target_result, wasmtime_val_t
 Executor::Executor(std::string wat_file) {
     this->wat_file = wat_file;
 
+    FuncSize fs = calculate_function_length(wat_file);
+    this->func_size = fs;
+
     // wasmtime boilerplate
     this->engine = wasm_engine_new();
     assert(engine != NULL);
@@ -143,8 +146,8 @@ Executor::Executor(std::string wat_file) {
     wasm_byte_vec_t wasm;
     wasmtime_error_t *error = wasmtime_wat2wasm(wat->data, wat->size, &wasm);
     if (error != NULL) {
-    std::cerr << "Failed to parse wat into wasm" << std::endl;
-    exit(1);
+        std::cerr << "Failed to parse wat into wasm" << std::endl;
+        exit(1);
     }
     wasm_byte_vec_delete(wat);
 
@@ -152,8 +155,8 @@ Executor::Executor(std::string wat_file) {
     this->module = NULL;
     error = wasmtime_module_new(engine, (uint8_t*)wasm.data, wasm.size, &(this->module));
     if (this->module == NULL) {
-    std::cerr << "Failed to compile module" << std::endl;
-    exit(1);
+        std::cerr << "Failed to compile module" << std::endl;
+        exit(1);
     }
     wasm_byte_vec_delete(&wasm);
 
@@ -161,8 +164,8 @@ Executor::Executor(std::string wat_file) {
     wasm_trap_t* trap = NULL;
     error = wasmtime_instance_new(this->context, this->module, NULL, 0, &(this->instance), &trap);
     if (error != NULL || trap != NULL) {
-    std::cerr << "Failed to instantiate module" << std::endl;
-    exit(1);
+        std::cerr << "Failed to instantiate module" << std::endl;
+        exit(1);
     }
 
     // Create handle to exported test function
