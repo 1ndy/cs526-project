@@ -224,3 +224,47 @@ void TestCaseRunner::runTestCases() {
         this->rewrite.runTestCase(tc, false);
     }
 }
+
+// ============================================================================
+// OpcodeEquivalenceClass
+// ============================================================================
+
+// given an opcode, return list of equivalent opcodes
+std::set<UnaryOp> OpcodeEquivalenceClass::operator[] (UnaryOp opcode) {
+    for (auto clss : this->unary_eqclasses) {
+        auto matches = clss.find(opcode);
+        if (matches != clss.cend()) {
+            return clss;
+        }
+    }
+    return std::set<UnaryOp>{};
+}
+
+std::set<BinaryOp> OpcodeEquivalenceClass::operator[] (BinaryOp opcode) {
+for (auto clss : this->binary_eqclasses) {
+        auto matches = clss.find(opcode);
+        if (matches != clss.cend()) {
+            return clss;
+        }
+    }
+    return std::set<BinaryOp>{};
+}
+
+// static functions to pick a rand value from the sets returned by
+// operator[]
+// https://stackoverflow.com/a/3052796
+UnaryOp OpcodeEquivalenceClass::choose(std::set<UnaryOp> opcodes) {
+    auto r = opcodes.size();
+    auto n = rand() % r;
+    auto it = std::begin(opcodes);
+    std::advance(it,n);
+    return *it;
+}
+
+BinaryOp OpcodeEquivalenceClass::choose(std::set<BinaryOp> opcodes) {
+    auto r = opcodes.size();
+    auto n = rand() % r;
+    auto it = std::begin(opcodes);
+    std::advance(it,n);
+    return *it;
+}
