@@ -82,26 +82,30 @@ int main(int argc, const char* argv[]) {
   tcr.runTestCases();
   tc.printResults();
   std::cout << "Distance: " << tc.distance() << std::endl;
+  std::cout << "Cost of rewrite: " << 
+  sso_cost_function(target.func_size.normalized_length, 
+                    rewrite.func_size.normalized_length, 
+                    tc.distance()) << std::endl;
 
-  OpcodeEquivalenceClass eqc = OpcodeEquivalenceClass();
+//   OpcodeEquivalenceClass eqc = OpcodeEquivalenceClass();
 
-  for(int i = 0; i < 10; i++) {
-    auto options = eqc[wasm::AbsFloat32];
-    std::cout << "Options to replace AbsFloat32 (unary op): ";
-    for(auto opt : options) {
-        std::cout << opt << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "\t chose " << OpcodeEquivalenceClass::choose(options) << std::endl;
-  }
+//   for(int i = 0; i < 10; i++) {
+//     auto options = eqc[wasm::AbsFloat32];
+//     std::cout << "Options to replace AbsFloat32 (unary op): ";
+//     for(auto opt : options) {
+//         std::cout << opt << " ";
+//     }
+//     std::cout << std::endl;
+//     std::cout << "\t chose " << OpcodeEquivalenceClass::choose(options) << std::endl;
+//   }
 
-  for(int i = 0; i < 10; i++) {
-    auto options = eqc[wasm::AddFloat32];
-    std::cout << "Options to replace AddFloat32 (binary op): ";
-    for(auto opt : options) {
-        std::cout << opt << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "\t chose " << OpcodeEquivalenceClass::choose(options) << std::endl;
-  }
+//   for(int i = 0; i < 10; i++) {
+//     auto options = eqc[wasm::AddFloat32];
+//     std::cout << "Options to replace AddFloat32 (binary op): ";
+//     for(auto opt : options) {
+//         std::cout << opt << " ";
+//     }
+//     std::cout << std::endl;
+//     std::cout << "\t chose " << OpcodeEquivalenceClass::choose(options) << std::endl;
+//   }
 }
