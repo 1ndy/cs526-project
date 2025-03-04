@@ -5,10 +5,13 @@
 #include <memory>
 #include <sstream>
 
+#include "support/sso_utilities.h"
+
 typedef struct funcsize {
     int func_start;
     int func_end;
-    int normalized_length;
+    int normalized_wat_length;
+    int wasm_length;
     std::string excerpt;
 } FuncSize;
 
@@ -64,9 +67,21 @@ FuncSize calculate_function_length(std::string infile) {
     }
   }
 
-  fs.normalized_length = data_chars;
+  fs.normalized_wat_length = data_chars;
   fs.excerpt = ss.str();
   watfile.close();
+
+  /// Calculate size of .wasm file corresponding to .wat
+  auto wat = read_wat_file(infile);
+  wasm_byte_vec_t wasm;
+  wasmtime_error_t *error = wasmtime_wat2wasm(wat->data, wat->size, &wasm);
+  if (error != NULL) {
+      std::cerr << "Failed to parse wat into wasm in size calculation" << std::endl;
+      exit(1);
+  }
+  fs.wasm_length = wasm.size;
+  wasm_byte_vec_delete(wat);
+  wasm_byte_vec_delete(&wasm);
 
   return fs;
 }

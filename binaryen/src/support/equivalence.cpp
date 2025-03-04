@@ -1,4 +1,5 @@
 #include <bitset>
+#include "support/utilities.h"
 #include "equivalence.h"
 
 TestCase::TestCase(wasm::Signature sig) {
@@ -140,7 +141,7 @@ Executor::Executor(std::string wat_file) {
     this->context = wasmtime_store_context(store);
 
     // Load input wat files
-    wasm_byte_vec_t* wat = this->read_wat_file(this->wat_file);
+    wasm_byte_vec_t* wat = read_wat_file(this->wat_file);
 
     // Parse the target and rewrite wats into wasm binary
     wasm_byte_vec_t wasm;
@@ -188,25 +189,6 @@ void Executor::runTestCase(TestCase& tc, bool is_target) {
         std::cerr << "Failed to call func" << std::endl;
         exit(1);
     }
-}
-
-wasm_byte_vec_t* Executor::read_wat_file(std::string wat_file) {
-    FILE *file = fopen(wat_file.c_str(), "r");
-    if (!file) {
-        std::cerr << "Error reading .wat file" << std::endl;
-        exit(1);
-    }
-    fseek(file, 0L, SEEK_END);
-    size_t file_size = ftell(file);
-    fseek(file, 0L, SEEK_SET);
-    wasm_byte_vec_t* wat = (wasm_byte_vec_t*)malloc(sizeof(wasm_byte_vec_t));
-    wasm_byte_vec_new_uninitialized(wat, file_size);
-    if (fread(wat->data, file_size, 1, file) != 1) {
-        std::cout << "Error readng module" << std::endl;
-        exit(1);
-    }
-    fclose(file);
-    return wat;
 }
 
 // ============================================================================

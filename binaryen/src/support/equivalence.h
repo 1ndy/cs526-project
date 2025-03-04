@@ -62,7 +62,6 @@ class Executor {
 //    wasmtime_val_t* params;
 //    wasmtime_val_t* results;
 
-    static wasm_byte_vec_t* read_wat_file(std::string wat_file);
 };
 
 class TestCaseRunner {

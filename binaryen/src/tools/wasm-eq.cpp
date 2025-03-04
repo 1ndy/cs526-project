@@ -82,9 +82,13 @@ int main(int argc, const char* argv[]) {
   tcr.runTestCases();
   tc.printResults();
   std::cout << "Distance: " << tc.distance() << std::endl;
-  std::cout << "Cost of rewrite: " << 
-  sso_cost_function(target.func_size.normalized_length, 
-                    rewrite.func_size.normalized_length, 
+  std::cout << "Cost of rewrite (wat): " <<
+  sso_cost_function(target.func_size.normalized_wat_length,
+                    rewrite.func_size.normalized_wat_length,
+                    tc.distance()) << std::endl;
+  std::cout << "Cost of rewrite (wasm): " <<
+  sso_cost_function(target.func_size.wasm_length,
+                    rewrite.func_size.wasm_length,
                     tc.distance()) << std::endl;
 
 //   OpcodeEquivalenceClass eqc = OpcodeEquivalenceClass();

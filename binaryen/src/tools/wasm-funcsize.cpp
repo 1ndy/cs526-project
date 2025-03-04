@@ -18,24 +18,6 @@
 
 using namespace wasm;
 
-char* read_wat_file(std::string filename) {
-    FILE *file = fopen(filename.c_str(), "r");
-    if (!file) {
-        std::cerr << "Error reading .wat file" << std::endl;
-        exit(1);
-    }
-    fseek(file, 0L, SEEK_END);
-    size_t file_size = ftell(file);
-    fseek(file, 0L, SEEK_SET);
-    char* wat = (char*)malloc(file_size);
-    if (fread(wat, file_size, 1, file) != 1) {
-        std::cout << "Error readng module" << std::endl;
-        exit(1);
-    }
-    fclose(file);
-    return wat;
-}
-
 int main(int argc, const char* argv[]) {
   std::string infile = "-";
   Options options("wasm-shell", "Execute .wast files");
@@ -48,6 +30,6 @@ int main(int argc, const char* argv[]) {
   FuncSize fs = calculate_function_length(infile);
 
   std::cout << "Function occupies " << fs.func_start << " - " << fs.func_end << std::endl;
-  std::cout << "Normalized function length: " << fs.normalized_length << std::endl;
+  std::cout << "Normalized function length: " << fs.normalized_wat_length << std::endl;
   std::cout << fs.excerpt << std::endl;
 }
