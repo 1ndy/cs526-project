@@ -2,6 +2,9 @@
 #include <iostream>
 #include <set>
 
+// Binaryen includes
+#include "support/sso_loss.h"
+
 // wasmtime includes
 #include "wasm.h"
 #include "wasmtime.h"
@@ -46,6 +49,7 @@ class Executor {
   public:
     Executor(std::string wat_file);
     void runTestCase(TestCase& tc, bool is_target);
+    FuncSize func_size;
 
   private:
     std::string wat_file;
@@ -58,7 +62,6 @@ class Executor {
 //    wasmtime_val_t* params;
 //    wasmtime_val_t* results;
 
-    static wasm_byte_vec_t* read_wat_file(std::string wat_file);
 };
 
 class TestCaseRunner {
